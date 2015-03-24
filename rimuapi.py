@@ -93,7 +93,10 @@ class Api:
             raise Exception(r.status_code, r.reason)
 
     def data_centers(self):
-        plans = self._plans if self._plans else self.plans()
+        try: 
+            plans = self._plans
+        except AttributeError:
+            plans = self.plans()
         data_centers = list(sort_uniq([i['offered_at_data_center'] for i in plans]))
         return data_centers
 

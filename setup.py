@@ -7,7 +7,7 @@ NAME = "RimuAPI"
 GITHUB_URL = "https://github.com/abdallah/%s" % (NAME)
 DESCRIPTION = "Python interface to RimuHosting API"
 
-VERSION = "0.0.2"
+VERSION = "0.0.5"
 
 REQUIREMENTS = ['requests']
 

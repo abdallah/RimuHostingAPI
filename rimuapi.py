@@ -62,6 +62,8 @@ class Api:
         else:
             raise Exception('Get API Key')
         url = self._baseurl+url
+        
+        data = data if isinstance(data, str) else json.dumps(data)
 
         s = Session()
         req = Request(method,  url,
@@ -125,18 +127,49 @@ class Api:
         if kwargs.has_key('dc_location'): _req['dc_location'] = kwargs['dc_location']
         if kwargs.has_key('meta_data'): _req['meta_data'] = kwargs['meta_data']
         if kwargs.has_key('file_injection_data'): _req['file_injection_data'] = kwargs['file_injection_data']
-        if kwargs.has_key('ssh_pub_key'): _req['file_injection_data'].append(
-                {'data_as_string': kwargs['ssh_pub_key'], 'path': '/root/.ssh/authorized_keys'}
-            )
+        if kwargs.has_key('ssh_pub_key'): 
+            _req['file_injection_data'] = []
+            _req['file_injection_data'].append(
+                                        {'data_as_string': kwargs['ssh_pub_key'], 
+                                         'path': '/root/.ssh/authorized_keys'})
         _req['instantiation_options'] = _options
         _req['vps_parameters'] = _params
         payload = { 'new_order_request': _req }
-        r = self.__send_request('/r/orders/new-vps', data=json.dumps(payload), method='POST')
+        r = self.__send_request('/r/orders/new-vps', data=payload, method='POST')
         if r.ok:
             return r.json()
         else:
             raise Exception(r.status_code, r.reason, r.text)
 
+    # reinstall server
+    def reinstall(self, domain, order_oid, **kwargs):
+        _options, _params, _req = {}, {}, {}
+        if not valid_domain_name(domain):
+            raise Exception(418, 'Domain not valid')
+        
+        _options['domain_name'] = domain
+        if kwargs.has_key('password'): _options['password'] = kwargs['password']
+        if kwargs.has_key('distro'): _options['distro'] = kwargs['distro']
+        if kwargs.has_key('control_panel'): _options['control_panel'] = kwargs['control_panel']
+        if kwargs.has_key('disk_space_mb'): _params['disk_space_mb'] = kwargs['disk_space_mb']
+        if kwargs.has_key('memory_mb'): _params['memory_mb'] = kwargs['memory_mb']
+        if kwargs.has_key('dc_location'): _req['dc_location'] = kwargs['dc_location']
+        if kwargs.has_key('meta_data'): _req['meta_data'] = kwargs['meta_data']
+        if kwargs.has_key('file_injection_data'): _req['file_injection_data'] = kwargs['file_injection_data']
+        if kwargs.has_key('ssh_pub_key'): 
+            _req['file_injection_data'] = []
+            _req['file_injection_data'].append(
+                                        {'data_as_string': kwargs['ssh_pub_key'], 
+                                         'path': '/root/.ssh/authorized_keys'})
+        _req['instantiation_options'] = _options
+        _req['vps_parameters'] = _params
+        payload = { 'new_order_request': _req }
+        r = self.__send_request('/r/orders/order-%s-%s/vps/reinstall'%(order_oid, domain), 
+            data=payload, method='PUT')
+        if r.ok:
+            return r.json()
+        else:
+            raise Exception(r.status_code, r.reason, r.text)
 
     # check status
     def status(self, domain, order_oid):
@@ -184,7 +217,8 @@ class Api:
     def change_state(self, domain, order_oid, new_state):
         if not valid_domain_name(domain):
             raise Exception(418, 'Domain not valid')
-        r = self.__send_request('/r/orders/order-%s-%s/vps/%s'%(order_oid, domain, state),
+        r = self.__send_request('/r/orders/order-%s-%s/vps/running-state'%(order_oid, domain), 
+            data={'running_state_change_request': {'running_state': new_state}},
             method='PUT')
         if r.ok:
             return r.json()
@@ -199,3 +233,28 @@ class Api:
 
     def start(self, domain, order_oid):
         return self.change_state(domain, order_oid, 'RUNNING')
+        
+    # move VPS to another host
+    def move(self, domain, order_oid, 
+                   update_dns=False, 
+                   move_reason='', 
+                   pricing_change_option='CHOOSE_BEST_OPTION', # 'CHOOSE_SAME_RESOURCES' | 'CHOOSE_SAME_PRICING'
+                   selected_host_server_oid=None):
+                   
+        if not valid_domain_name(domain):
+            raise Exception(418, 'Domain not valid')
+        r = self.__send_request('/r/orders/order-%s-%s/vps/host-server'%(order_oid, domain),
+            data={'vps_move_request': {
+                'is_update_dns': is_update_dns,
+                'move_reason': move_reason, 
+                'pricing_change_option': pricing_change_option,
+                'selected_host_server_oid': selected_host_server_oid } },
+            method='PUT')
+        if r.ok:
+            return r.json()
+        else:
+            raise Exception(r.status_code, r.reason)
+            
+    
+    
+    

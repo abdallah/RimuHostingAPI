@@ -9,7 +9,7 @@ DESCRIPTION = "Python interface to RimuHosting API"
 
 VERSION = "0.0.5"
 
-REQUIREMENTS = ['requests']
+REQUIREMENTS = ['requests' ]
 
 setup(name=NAME,
               version=VERSION,

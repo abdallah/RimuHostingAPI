@@ -17,10 +17,11 @@ class Args(object):
         xx = rimuapi.Api()
         # has a cluster id, is active, is master
         existing = xx.orders('N', {'server_type': 'VPS','meta_search': 'com.rimuhosting.kclusterid: com.rimuhosting.kismaster:Y'})
-        print(existing)
         for order in existing:
             kclusterid = objectpath.Tree(order).execute("$.meta_data[@.key_name is 'com.rimuhosting.kclusterid'].value")
-            print("Cluster master order_oid:  "  + str(existing[0]["order_oid"]) + " " + list(kclusterid)[0])
+            ip = objectpath.Tree(order).execute("$.allocated_ips.primary_ip")
+            #print(order)
+            print("Cluster master order_oid:  "  + str(existing[0]["order_oid"]) + " " + list(kclusterid)[0] + " " + ip)
                         
 if __name__ == '__main__':
     args = Args();

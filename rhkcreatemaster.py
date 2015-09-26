@@ -8,7 +8,7 @@ import rimuapi
 #from jsonpath_rw import jsonpath, parse
 import objectpath
 
-isDebug = True
+isDebug = False
 def debug(str):
     if isDebug:
         print(str)
@@ -63,8 +63,7 @@ class Args(object):
             return
         
         if existing:
-            raise Exception("That cluster already exists.  Delete it or create a new one.")
-        raise Exception("foo")
+            raise Exception("That cluster already exists.  Delete it, or create a new one, or reinstall it (with the --reinstall option).  Use rhkclusterlist.py to list the existing clusters.")
         master = xx.create(master_server_json)
         debug ("created master server: " + str(master))
         

@@ -8,7 +8,12 @@ try:
 except ImportError:
     import simplejson as json
 
+isDebug=False
 
+def debug(str):
+    if isDebug:
+        print(str)
+        
 def sort_unique(sequence):
     import itertools
     import operator
@@ -59,11 +64,11 @@ class Api:
         if not self._key:
             settings = load_settings('.rimuhosting')
             if settings:
-                self._key = settings.apikey
+                self._key = settings.RIMUHOSTING_APIKEY
 
     def __send_request(self, url, data=None, method='GET', isKeyRequired=True):
         if isKeyRequired and not self._key:
-            raise Exception('API Key is required.  e.g. export RIMUHOSTING_APIKEY=xxxx .  Get the API key from http://rimuhosting.com/cp/apikeys.jsp')
+            raise Exception('API Key is required.  Get the API key from http://rimuhosting.com/cp/apikeys.jsp.  Then export RIMUHOSTING_APIKEY=xxxx (the digits only) or add RIMUHOSTING_APIKEY=xxxx to a ~/.rimuhosting file.')
         headers = {
             'Content-Type': 'application/json',
             'Accept': 'application/json'
@@ -85,7 +90,11 @@ class Api:
         if not resp.ok:
             message = resp.text
             try: 
-                message = resp.json()["jaxrs_response"]["error_info"]["human_readable_message"]
+                j2 = resp.json()
+                for val in j2:
+                  if "error_info" in j2[val] and "human_readable_message" in j2[val]["error_info"]:
+                      message = j2[val]["error_info"]["human_readable_message"]
+                  break
             finally:
                 raise Exception(resp.status_code, resp.reason, message)
         
@@ -134,7 +143,7 @@ class Api:
         uri = uri.replace('&', ';')
         r = self.__send_request(uri)
         data = r.json()
-        print("order search uri of " + str(uri) + " returns " + str(data))
+        debug("order search uri of " + str(uri) + " returns " + str(data))
         return data['get_orders_response']['about_orders']
 
     def _get_req(self, domain=None, kwargs={}):

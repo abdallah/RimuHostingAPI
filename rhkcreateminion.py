@@ -16,7 +16,7 @@ def debug(str):
 class Args(object):
     def __init__(self):
         parser = argparse.ArgumentParser()
-        parser.add_argument("--kclusterid", help="Unique id for this cluster.  e.g. cluster1")
+        parser.add_argument("--kclusterid", required=True, help="Unique id for this cluster.  e.g. cluster1")
         parser.add_argument("--server_json", required=True, help="Server json.  e.g. containing memory_mb and disk_space_gb.  per http://apidocs.rimuhosting.com/jaxbdocs/com/rimuhosting/rs/order/OSDPrepUtils.NewVPSRequest.html")
         parser.add_argument("--cloud_config", required=True, help="Server cloud config file")
         parser.add_argument("--dc_location", required=False, help="Optional data center location.  e.g. DCDALLAS, DCFRANKFURT, DCAUCKLAND")

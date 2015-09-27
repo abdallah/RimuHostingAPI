@@ -20,6 +20,7 @@ class Args(object):
         #print(pformat(order))
         summary = {"order_oid" : order["order_oid"], "kclusterid" : "" if kclusterid is None else list(kclusterid)[0]
                    , "primary_ip" : "" if ip is None else ip
+                   , "domain_name" : order["domain_name"]
                    , "dc_location" : order["location"]["data_center_location_code"], "running_state" : order["running_state"], "memory_mb" : details.execute("$.vps_parameters.memory_mb"), "order_description" : details.execute("$.order_description") }
         return summary
     

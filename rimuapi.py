@@ -86,7 +86,7 @@ class Api:
                       headers=headers
                       )
         prepped = s.prepare_request(req)
-        resp = s.send(prepped)
+        resp = s.send(prepped, timeout=3600)
         if not resp.ok:
             message = resp.text
             try: 

@@ -21,12 +21,14 @@ class Args(object):
         parser.add_argument("--cloud_config", required=True, help="Server cloud config file")
         parser.add_argument("--dc_location", required=False, help="Optional data center location.  e.g. DCDALLAS, DCFRANKFURT, DCAUCKLAND")
         parser.add_argument("--debug", action="store_true", help="Show debug logging")
+        parser.add_argument("--reinstall_order_oid", required=False, type=int, help="order_oid to reinstall")
+        parser.add_argument("--domain_name", required=False, help="Domain name for server")
         parser.parse_args(namespace=self)
         isDebug = self.debug;
     
     def run(self):
         xx = rimuapi.Api()
-        server_json = json.load(open(args.server_json))
+        server_json = json.load(open(self.server_json))
         debug("server json = " + str(server_json))
         if not hasattr(server_json, "instantiation_options"):
             server_json["instantiation_options"] = dict()
@@ -36,7 +38,7 @@ class Args(object):
         if not hasattr(server_json["instantiation_options"], "domain_name"):
           server_json["instantiation_options"]["domain_name"] = "coreosminion.localhost"
         if not hasattr(server_json["instantiation_options"], "cloud_config_data"):
-           server_json["instantiation_options"]["cloud_config_data"] = open(args.cloud_config).read()
+           server_json["instantiation_options"]["cloud_config_data"] = open(self.cloud_config).read()
         if not hasattr(server_json, "meta_data"):
             server_json["meta_data"] = list()
         if not hasattr(server_json, "file_injection_data"):
@@ -49,10 +51,10 @@ class Args(object):
         klusterids = objectpath.Tree(server_json).execute("$.meta_data[@.key_name is 'com.rimuhosting.kclusterid'].value")
         if not klusterids is None and len(list(klusterids)) > 0:
             raise Exception("Provide the cluster id as a command line argument.")
-        server_json["meta_data"].append({'key_name': 'com.rimuhosting.kclusterid' , 'value' : args.kclusterid})
+        server_json["meta_data"].append({'key_name': 'com.rimuhosting.kclusterid' , 'value' : self.kclusterid})
         server_json["meta_data"].append({'key_name': 'com.rimuhosting.kisminion' , 'value' : 'Y'})
     
-        existing = xx.orders('N', {'server_type': 'VPS', 'meta_search': 'com.rimuhosting.kclusterid:' + args.kclusterid + ' com.rimuhosting.kismaster:Y'})
+        existing = xx.orders('N', {'server_type': 'VPS', 'meta_search': 'com.rimuhosting.kclusterid:' + self.kclusterid + ' com.rimuhosting.kismaster:Y'})
         if len(existing) == 0:
             raise Exception("Could not find that cluster master.  Create the master first?")
         if len(existing) > 1:
@@ -64,10 +66,30 @@ class Args(object):
         
         # replace the magic $kubernetes_master_ipv4 string with the master ip
         server_json["instantiation_options"]["cloud_config_data"] = server_json["instantiation_options"]["cloud_config_data"].replace("$kubernetes_master_ipv4", ip, 99)
-        #print("cloud config = " + server_json["instantiation_options"]["cloud_config_data"])
-
-        vm = xx.create(server_json)
-        debug ("created minion server: " + str(vm))
+        if self.reinstall_order_oid:
+            reinstallminion = xx.orders('N', {'server_type': 'VPS', 'order_oids' : self.reinstall_order_oid, 'meta_search': 'com.rimuhosting.kclusterid:' + self.kclusterid + ' com.rimuhosting.kisminion:Y'})
+            if len(reinstallminion)==0:
+                raise Exception("Requested minion not found")
+            if server_json["instantiation_options"]["domain_name"] == "coreosminion.localhost":
+                server_json["instantiation_options"]["domain_name"] = reinstallminion[0]["domain_name"]
+            if self.domain_name:
+                server_json["instantiation_options"]["domain_name"] = self.domain_name
+            # replace the magic $kubernetes_domain_name with the server domain name
+            server_json["instantiation_options"]["cloud_config_data"] = server_json["instantiation_options"]["cloud_config_data"].replace("$kubernetes_domain_name", server_json["instantiation_options"]["domain_name"], 99)
+            vm = xx.reinstall(int(reinstallminion[0]["order_oid"]), server_json)
+        else:
+            #print("cloud config = " + server_json["instantiation_options"]["cloud_config_data"])
+            if self.domain_name:
+                server_json["instantiation_options"]["domain_name"] = self.domain_name
+            elif server_json["instantiation_options"]["domain_name"] == "coreosminion.localhost":
+                minions = xx.orders(None, {'server_type': 'VPS', 'meta_search': 'com.rimuhosting.kclusterid:' + self.kclusterid + ' com.rimuhosting.kisminion:Y'})
+                server_json["instantiation_options"]["domain_name"] = "coreosminion-" + str(len(minions)+1) +".localhost"
+            # replace the magic $kubernetes_domain_name with the server domain name
+            server_json["instantiation_options"]["cloud_config_data"] = server_json["instantiation_options"]["cloud_config_data"].replace("$kubernetes_domain_name", server_json["instantiation_options"]["domain_name"], 99)
+            print("lc_location0 = " + server_json["dc_location"])
+            vm = xx.create(server_json)
+        debug ("created minion server")
+        print(pformat(vm))
                         
 if __name__ == '__main__':
     args = Args();

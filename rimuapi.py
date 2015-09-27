@@ -189,12 +189,14 @@ class Api:
     def create(self, domain, **kwargs):
         _req = self._get_req(domain, kwargs)
         payload = {'new_order_request': _req}
+        print("dc_location=" + (_req["dc_location"] if "dc_location" in _req else ''))
         r = self.__send_request('/r/orders/new-vps', data=payload, method='POST')
         return r.json()
 
     def create(self, vmargs={}):
         _req = self._get_req(domain=None, kwargs=vmargs)
         payload = {'new_order_request': _req}
+        print("dc_location=" + (_req["dc_location"] if "dc_location" in _req else ''))
         r = self.__send_request('/r/orders/new-vps', data=payload, method='POST')
         return r.json()
 

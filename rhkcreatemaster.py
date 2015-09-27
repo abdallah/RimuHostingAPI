@@ -24,10 +24,15 @@ class Args(object):
         parser.parse_args(namespace=self)
         isDebug = self.debug;
     
+    def debug(self, str):
+        if isDebug or self.debug:
+            print(str)
+            print()     
+            
     def run(self):
         xx = rimuapi.Api()
         server_json = json.load(open(args.server_json))
-        debug("server json = " + str(server_json))
+        self.debug("server json = " + str(server_json))
         if not hasattr(server_json, "instantiation_options"):
             server_json["instantiation_options"] = dict()
         #if not hasattr(server_json["instantiation_options"], "distro"):
@@ -47,6 +52,8 @@ class Args(object):
             raise Exception("Provide the cluster id as a command line argument.")
         server_json["meta_data"].append({'key_name': 'com.rimuhosting.kclusterid' , 'value' : args.kclusterid})
         server_json["meta_data"].append({'key_name': 'com.rimuhosting.kismaster' , 'value' : 'Y'})
+        # replace the magic $kubernetes_domain_name with the server domain name
+        server_json["instantiation_options"]["cloud_config_data"] = server_json["instantiation_options"]["cloud_config_data"].replace("$kubernetes_domain_name", server_json["instantiation_options"]["domain_name"], 99)
     
         existing = xx.orders('N', {'server_type': 'VPS','meta_search': 'com.rimuhosting.kclusterid:' +args.kclusterid+ ' com.rimuhosting.kismaster:Y'})
         if args.isreinstall:
@@ -55,17 +62,19 @@ class Args(object):
             if len(existing)>1:
                 raise Exception("Found multiple cluster masters with this id.")
             
-            debug("Running a reinstall")
-            debug("Running a reinstall on " + str(existing[0]["order_oid"]) + " " + str(existing[0]))
+            self.debug("Running a reinstall on " + str(existing[0]["order_oid"]) + " " + str(existing[0]) + " ETA 5 minutes")
             
             master = xx.reinstall(int(existing[0]["order_oid"]), server_json)
-            debug ("reinstalled master server: " + str(master))
+            self.debug ("reinstalled master server")
+            print(pformat(master))
             return
         
         if existing:
             raise Exception("That cluster already exists.  Delete it, or create a new one, or reinstall it (with the --reinstall option).  Use rhkclusterlist.py to list the existing clusters.")
+        self.debug ("creating master server (ETA 5 minutes)...")
         master = xx.create(server_json)
-        debug ("created master server: " + str(master))
+        self.debug ("created master server: ")
+        print (pformat(master))
         
     def _deadCode(self):
         if True:

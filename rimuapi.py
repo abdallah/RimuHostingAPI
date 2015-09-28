@@ -57,7 +57,6 @@ class Api:
         self._base_url = 'https://rimuhosting.com'
 
         self._distros = []
-        self._plans = []
 
         if not self._key:
             self._key = os.getenv('RIMUHOSTING_APIKEY', None)

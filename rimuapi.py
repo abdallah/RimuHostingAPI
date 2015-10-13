@@ -2,6 +2,7 @@ import urllib
 import os
 from requests import Request, Session
 from warnings import catch_warnings
+from pprint import pformat
 
 try:
     import json
@@ -156,6 +157,9 @@ class Api:
         _params = _req['vps_parameters']
         if domain:
             _options['domain_name'] = domain
+        #print(pformat(_options))
+        if not 'domain_name' in _options:
+            raise Exception(418, 'Domain name not provided')
         if not valid_domain_name(_options['domain_name']):
             raise Exception(418, 'Domain not valid')
         if 'password' in kwargs:
@@ -188,14 +192,14 @@ class Api:
     def create(self, domain, **kwargs):
         _req = self._get_req(domain, kwargs)
         payload = {'new_order_request': _req}
-        print("dc_location=" + (_req["dc_location"] if "dc_location" in _req else ''))
+        #print("dc_location=" + (_req["dc_location"] if "dc_location" in _req else ''))
         r = self.__send_request('/r/orders/new-vps', data=payload, method='POST')
         return r.json()
 
     def create(self, vmargs={}):
         _req = self._get_req(domain=None, kwargs=vmargs)
         payload = {'new_order_request': _req}
-        print("dc_location=" + (_req["dc_location"] if "dc_location" in _req else ''))
+        #print("dc_location=" + (_req["dc_location"] if "dc_location" in _req else ''))
         r = self.__send_request('/r/orders/new-vps', data=payload, method='POST')
         return r.json()
 

@@ -4,12 +4,12 @@ __author__ = "Abdallah Deeb <abdallah@deeb.me>"
 import os
 from setuptools import setup
 NAME = "RimuAPI"
-GITHUB_URL = "https://github.com/abdallah/%s" % (NAME)
+GITHUB_URL = "https://github.com/pbkwee/%s" % (NAME)
 DESCRIPTION = "Python interface to RimuHosting API"
 
-VERSION = "0.0.5"
+VERSION = "0.0.6"
 
-REQUIREMENTS = ['requests']
+REQUIREMENTS = ['requests','objectpath','pytz' ]
 
 setup(name=NAME,
               version=VERSION,
